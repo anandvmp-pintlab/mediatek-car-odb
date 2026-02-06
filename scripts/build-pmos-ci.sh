@@ -14,18 +14,13 @@ git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
 
 # Patch pmbootstrap to allow running as root (needed for CI)
 echo "=== Patching pmbootstrap for root access ==="
-# Find all files with root check and patch them
-for f in $(grep -rl "geteuid" /tmp/pmbootstrap/pmb/ 2>/dev/null); do
-    echo "Patching: $f"
-    sed -i 's/os.geteuid() == 0/False/g' "$f"
-done
-# Also patch any RuntimeError about root
-for f in $(grep -rl "Do not run pmbootstrap as root" /tmp/pmbootstrap/ 2>/dev/null); do
-    echo "Patching root message in: $f"
-    sed -i '/Do not run pmbootstrap as root/d' "$f"
-done
-echo "=== Verifying patch ==="
-grep -rn "geteuid" /tmp/pmbootstrap/pmb/ || echo "No geteuid found - patch successful"
+# Replace the root check with pass statement
+sed -i 's/if os.geteuid() == 0:/if False:  # patched for CI/g' /tmp/pmbootstrap/pmb/__init__.py
+sed -i 's/raise RuntimeError("Do not run pmbootstrap as root!")/pass  # patched for CI/g' /tmp/pmbootstrap/pmb/__init__.py
+echo "=== Patched __init__.py ==="
+grep -n "patched for CI" /tmp/pmbootstrap/pmb/__init__.py || true
+# Verify Python syntax
+python3 -m py_compile /tmp/pmbootstrap/pmb/__init__.py && echo "Syntax OK" || echo "Syntax error!"
 
 # Setup work directory
 echo "=== Setting up work directory ==="
