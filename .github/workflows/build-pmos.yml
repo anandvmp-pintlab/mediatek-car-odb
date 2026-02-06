@@ -23,12 +23,10 @@ jobs:
 
     - name: Build PostmarketOS
       run: |
-        # Everything runs as root
         sudo bash -c '
         set -ex
 
         WORK_DIR="/root/pmbootstrap-work"
-        DEVICE="xiaomi-cactus"
 
         # Clone pmbootstrap
         echo "=== Cloning pmbootstrap ==="
@@ -44,39 +42,10 @@ jobs:
         mkdir -p "$WORK_DIR/cache_git"
         git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
 
-        # Create config
+        # Create config from base64
         echo "=== Creating config ==="
         mkdir -p /root/.config
-        cat > /root/.config/pmbootstrap.cfg << "PMCONFIG"
-[pmbootstrap]
-aports = /root/pmbootstrap-work/cache_git/pmaports
-ccache_size = 5G
-channel = master
-device = xiaomi-cactus
-extra_packages = none
-hostname = pmos
-build_pkgs_on_install = True
-jobs = 4
-kernel =
-keymap =
-locale = en_US.UTF-8
-mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/
-mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/
-nonfree_firmware = True
-nonfree_userland = False
-ssh_keys = False
-ssh_key_glob = ~/.ssh/id_*.pub
-timezone = GMT
-ui = none
-ui_extras = False
-user = user
-work = /root/pmbootstrap-work
-boot_size = 256
-extra_space = 0
-sudo_timer = False
-
-[providers]
-PMCONFIG
+        echo "W3BtYm9vdHN0cmFwXQphcG9ydHMgPSAvcm9vdC9wbWJvb3RzdHJhcC13b3JrL2NhY2hlX2dpdC9wbWFwb3J0cwpjY2FjaGVfc2l6ZSA9IDVHCmNoYW5uZWwgPSBtYXN0ZXIKZGV2aWNlID0geGlhb21pLWNhY3R1cwpleHRyYV9wYWNrYWdlcyA9IG5vbmUKaG9zdG5hbWUgPSBwbW9zCmJ1aWxkX3BrZ3Nfb25faW5zdGFsbCA9IFRydWUKam9icyA9IDQKa2VybmVsID0Ka2V5bWFwID0KbG9jYWxlID0gZW5fVVMuVVRGLTgKbWlycm9yX2FscGluZSA9IGh0dHA6Ly9kbC1jZG4uYWxwaW5lbGludXgub3JnL2FscGluZS8KbWlycm9yc19wb3N0bWFya2V0b3MgPSBodHRwOi8vbWlycm9yLnBvc3RtYXJrZXRvcy5vcmcvcG9zdG1hcmtldG9zLwpub25mcmVlX2Zpcm13YXJlID0gVHJ1ZQpub25mcmVlX3VzZXJsYW5kID0gRmFsc2UKc3NoX2tleXMgPSBGYWxzZQpzc2hfa2V5X2dsb2IgPSB+Ly5zc2gvaWRfKi5wdWIKdGltZXpvbmUgPSBHTVQKdWkgPSBub25lCnVpX2V4dHJhcyA9IEZhbHNlCnVzZXIgPSB1c2VyCndvcmsgPSAvcm9vdC9wbWJvb3RzdHJhcC13b3JrCmJvb3Rfc2l6ZSA9IDI1NgpleHRyYV9zcGFjZSA9IDAKc3Vkb190aW1lciA9IEZhbHNlCgpbcHJvdmlkZXJzXQo=" | base64 -d > /root/.config/pmbootstrap.cfg
 
         echo "=== Config file ==="
         cat /root/.config/pmbootstrap.cfg
