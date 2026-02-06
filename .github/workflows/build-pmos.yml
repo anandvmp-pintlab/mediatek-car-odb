@@ -4,19 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      device:
-        description: 'Device codename'
-        required: true
-        default: 'xiaomi-cactus'
-      ui:
-        description: 'UI (none, plasma-mobile, phosh, etc.)'
-        required: true
-        default: 'none'
-
-env:
-  DEFAULT_DEVICE: 'xiaomi-cactus'
-  DEFAULT_UI: 'none'
 
 jobs:
   build:
@@ -41,11 +28,11 @@ jobs:
         echo "Done!"
 
     - name: Setup pmbootstrap
-      env:
-        DEVICE: ${{ github.event.inputs.device || 'xiaomi-cactus' }}
-        UI: ${{ github.event.inputs.ui || 'none' }}
       run: |
         WORK_DIR="/tmp/pmbootstrap-work"
+        DEVICE="xiaomi-cactus"
+        UI="none"
+
         sudo mkdir -p "$WORK_DIR"
         sudo chmod 777 "$WORK_DIR"
         echo '8' > "$WORK_DIR/version"
@@ -56,36 +43,35 @@ jobs:
         echo "pmaports cloned!"
 
         sudo mkdir -p /root/.config
-        sudo tee /root/.config/pmbootstrap.cfg > /dev/null << ENDCONFIG
-[pmbootstrap]
-aports = /tmp/pmbootstrap-work/cache_git/pmaports
-ccache_size = 5G
-channel = master
-device = $DEVICE
-extra_packages = none
-hostname = pmos
-build_pkgs_on_install = True
-jobs = 4
-kernel =
-keymap =
-locale = en_US.UTF-8
-mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/
-mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/
-nonfree_firmware = True
-nonfree_userland = False
-ssh_keys = False
-ssh_key_glob = ~/.ssh/id_*.pub
-timezone = GMT
-ui = $UI
-ui_extras = False
-user = user
-work = /tmp/pmbootstrap-work
-boot_size = 256
-extra_space = 0
-sudo_timer = False
 
-[providers]
-ENDCONFIG
+        echo '[pmbootstrap]' | sudo tee /root/.config/pmbootstrap.cfg
+        echo "aports = /tmp/pmbootstrap-work/cache_git/pmaports" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "ccache_size = 5G" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "channel = master" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "device = $DEVICE" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "extra_packages = none" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "hostname = pmos" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "build_pkgs_on_install = True" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "jobs = 4" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "kernel =" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "keymap =" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "locale = en_US.UTF-8" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "nonfree_firmware = True" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "nonfree_userland = False" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "ssh_keys = False" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "ssh_key_glob = ~/.ssh/id_*.pub" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "timezone = GMT" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "ui = $UI" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "ui_extras = False" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "user = user" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "work = /tmp/pmbootstrap-work" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "boot_size = 256" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "extra_space = 0" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "sudo_timer = False" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo "" | sudo tee -a /root/.config/pmbootstrap.cfg
+        echo '[providers]' | sudo tee -a /root/.config/pmbootstrap.cfg
 
         echo "=== Config file ==="
         sudo cat /root/.config/pmbootstrap.cfg
@@ -105,6 +91,6 @@ ENDCONFIG
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: pmos-${{ github.event.inputs.device || 'xiaomi-cactus' }}
+        name: pmos-xiaomi-cactus
         path: output/
         retention-days: 7
