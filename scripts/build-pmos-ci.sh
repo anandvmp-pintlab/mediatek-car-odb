@@ -2,13 +2,15 @@
 # PostmarketOS Build Script for GitHub Actions CI
 set -ex
 
-export HOME=/home/builder
-WORK_DIR="/home/builder/pmbootstrap-work"
-CONFIG="/home/builder/.config/pmbootstrap.cfg"
+# Allow running as root (needed for CI chroot operations)
+export PMBOOTSTRAP_ALLOW_RUNNING_AS_ROOT=1
+
+WORK_DIR="/tmp/pmbootstrap-work"
+CONFIG="/tmp/pmbootstrap.cfg"
 
 # Clone pmbootstrap
 echo "=== Cloning pmbootstrap ==="
-git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /home/builder/pmbootstrap
+git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /tmp/pmbootstrap
 
 # Setup work directory
 echo "=== Setting up work directory ==="
@@ -22,10 +24,9 @@ git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmaports.git "$
 
 # Create config
 echo "=== Creating config ==="
-mkdir -p /home/builder/.config
 cat > "$CONFIG" << 'ENDCONFIG'
 [pmbootstrap]
-aports = /home/builder/pmbootstrap-work/cache_git/pmaports
+aports = /tmp/pmbootstrap-work/cache_git/pmaports
 ccache_size = 5G
 channel = master
 device = xiaomi-cactus
@@ -46,7 +47,7 @@ timezone = GMT
 ui = none
 ui_extras = False
 user = user
-work = /home/builder/pmbootstrap-work
+work = /tmp/pmbootstrap-work
 boot_size = 256
 extra_space = 0
 sudo_timer = False
@@ -59,14 +60,14 @@ cat "$CONFIG"
 
 # Check pmbootstrap status
 echo "=== pmbootstrap status ==="
-/home/builder/pmbootstrap/pmbootstrap.py -c "$CONFIG" status || true
+/tmp/pmbootstrap/pmbootstrap.py -c "$CONFIG" status || true
 
 # Build
 echo "=== Starting build ==="
-/home/builder/pmbootstrap/pmbootstrap.py -c "$CONFIG" -v install
+/tmp/pmbootstrap/pmbootstrap.py -c "$CONFIG" -v install
 
 # Export
 echo "=== Exporting images ==="
-mkdir -p /home/builder/output
-/home/builder/pmbootstrap/pmbootstrap.py -c "$CONFIG" export /home/builder/output/
-ls -la /home/builder/output/
+mkdir -p /tmp/pmos-output
+/tmp/pmbootstrap/pmbootstrap.py -c "$CONFIG" export /tmp/pmos-output/
+ls -la /tmp/pmos-output/

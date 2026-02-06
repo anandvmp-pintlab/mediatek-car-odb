@@ -21,24 +21,15 @@ jobs:
           kpartx e2fsprogs dosfstools parted util-linux multipath-tools \
           curl wget tar gzip xz-utils bzip2 file patch make gcc qemu-user-static
 
-    - name: Create builder user
-      run: |
-        sudo useradd -m -s /bin/bash builder
-        echo "builder ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/builder
-
-    - name: Setup build script
-      run: |
-        sudo cp scripts/build-pmos-ci.sh /home/builder/
-        sudo chmod +x /home/builder/build-pmos-ci.sh
-        sudo chown builder:builder /home/builder/build-pmos-ci.sh
-
     - name: Build PostmarketOS
-      run: sudo -u builder -i /home/builder/build-pmos-ci.sh
+      run: |
+        chmod +x scripts/build-pmos-ci.sh
+        sudo scripts/build-pmos-ci.sh
 
     - name: Copy artifacts
       run: |
         mkdir -p output
-        sudo cp -r /home/builder/output/* output/ || true
+        sudo cp -r /tmp/pmos-output/* output/ || true
         sudo chown -R $USER:$USER output/
         ls -la output/
 
