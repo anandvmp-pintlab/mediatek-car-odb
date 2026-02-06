@@ -29,56 +29,54 @@ jobs:
           curl wget tar gzip xz-utils bzip2 file patch make gcc qemu-user-static
 
     - name: Clone pmbootstrap
-      run: |
-        git clone --depth 1 https://gitlab.com/postmarketOS/pmbootstrap.git
+      run: git clone --depth 1 https://gitlab.com/postmarketOS/pmbootstrap.git
 
     - name: Setup pmbootstrap
+      env:
+        DEVICE: ${{ github.event.inputs.device }}
+        UI: ${{ github.event.inputs.ui }}
       run: |
         WORK_DIR="/home/runner/.local/var/pmbootstrap"
         mkdir -p "$WORK_DIR"
         echo '8' > "$WORK_DIR/version"
-
         mkdir -p "$WORK_DIR/cache_git"
         git clone --depth 1 https://gitlab.com/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
-
         mkdir -p ~/.config
-        cat > ~/.config/pmbootstrap.cfg << EOF
-[pmbootstrap]
-aports = /home/runner/.local/var/pmbootstrap/cache_git/pmaports
-ccache_size = 5G
-channel = master
-device = ${{ github.event.inputs.device }}
-extra_packages = none
-hostname = pmos
-build_pkgs_on_install = True
-jobs = 4
-kernel =
-keymap =
-locale = en_US.UTF-8
-mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/
-mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/
-nonfree_firmware = True
-nonfree_userland = False
-ssh_keys = False
-ssh_key_glob = ~/.ssh/id_*.pub
-timezone = GMT
-ui = ${{ github.event.inputs.ui }}
-ui_extras = False
-user = user
-work = /home/runner/.local/var/pmbootstrap
-boot_size = 256
-extra_space = 0
-sudo_timer = False
 
-[providers]
-EOF
+        echo "[pmbootstrap]" > ~/.config/pmbootstrap.cfg
+        echo "aports = /home/runner/.local/var/pmbootstrap/cache_git/pmaports" >> ~/.config/pmbootstrap.cfg
+        echo "ccache_size = 5G" >> ~/.config/pmbootstrap.cfg
+        echo "channel = master" >> ~/.config/pmbootstrap.cfg
+        echo "device = $DEVICE" >> ~/.config/pmbootstrap.cfg
+        echo "extra_packages = none" >> ~/.config/pmbootstrap.cfg
+        echo "hostname = pmos" >> ~/.config/pmbootstrap.cfg
+        echo "build_pkgs_on_install = True" >> ~/.config/pmbootstrap.cfg
+        echo "jobs = 4" >> ~/.config/pmbootstrap.cfg
+        echo "kernel =" >> ~/.config/pmbootstrap.cfg
+        echo "keymap =" >> ~/.config/pmbootstrap.cfg
+        echo "locale = en_US.UTF-8" >> ~/.config/pmbootstrap.cfg
+        echo "mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/" >> ~/.config/pmbootstrap.cfg
+        echo "mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/" >> ~/.config/pmbootstrap.cfg
+        echo "nonfree_firmware = True" >> ~/.config/pmbootstrap.cfg
+        echo "nonfree_userland = False" >> ~/.config/pmbootstrap.cfg
+        echo "ssh_keys = False" >> ~/.config/pmbootstrap.cfg
+        echo "ssh_key_glob = ~/.ssh/id_*.pub" >> ~/.config/pmbootstrap.cfg
+        echo "timezone = GMT" >> ~/.config/pmbootstrap.cfg
+        echo "ui = $UI" >> ~/.config/pmbootstrap.cfg
+        echo "ui_extras = False" >> ~/.config/pmbootstrap.cfg
+        echo "user = user" >> ~/.config/pmbootstrap.cfg
+        echo "work = /home/runner/.local/var/pmbootstrap" >> ~/.config/pmbootstrap.cfg
+        echo "boot_size = 256" >> ~/.config/pmbootstrap.cfg
+        echo "extra_space = 0" >> ~/.config/pmbootstrap.cfg
+        echo "sudo_timer = False" >> ~/.config/pmbootstrap.cfg
+        echo "" >> ~/.config/pmbootstrap.cfg
+        echo "[providers]" >> ~/.config/pmbootstrap.cfg
 
         echo "=== Config file ==="
         cat ~/.config/pmbootstrap.cfg
 
     - name: Build PostmarketOS
-      run: |
-        sudo ./pmbootstrap/pmbootstrap.py install
+      run: sudo ./pmbootstrap/pmbootstrap.py install
 
     - name: Export images
       run: |
@@ -93,4 +91,3 @@ EOF
         name: pmos-${{ github.event.inputs.device }}
         path: output/
         retention-days: 7
-
