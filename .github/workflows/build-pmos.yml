@@ -29,7 +29,10 @@ jobs:
           curl wget tar gzip xz-utils bzip2 file patch make gcc qemu-user-static
 
     - name: Clone pmbootstrap
-      run: git clone --depth 1 https://gitlab.com/postmarketOS/pmbootstrap.git
+      run: |
+        echo "Cloning pmbootstrap..."
+        git clone --depth 1 --progress https://gitlab.com/postmarketOS/pmbootstrap.git
+        echo "Done!"
 
     - name: Setup pmbootstrap
       env:
@@ -40,7 +43,9 @@ jobs:
         mkdir -p "$WORK_DIR"
         echo '8' > "$WORK_DIR/version"
         mkdir -p "$WORK_DIR/cache_git"
-        git clone --depth 1 https://gitlab.com/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
+        echo "Cloning pmaports (this takes a few minutes)..."
+        git clone --depth 1 --progress https://gitlab.com/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
+        echo "pmaports cloned!"
         mkdir -p ~/.config
 
         echo "[pmbootstrap]" > ~/.config/pmbootstrap.cfg
@@ -76,7 +81,10 @@ jobs:
         cat ~/.config/pmbootstrap.cfg
 
     - name: Build PostmarketOS
-      run: sudo ./pmbootstrap/pmbootstrap.py install
+      run: |
+        echo "::group::Starting PostmarketOS build"
+        sudo ./pmbootstrap/pmbootstrap.py -v install 2>&1 | tee build.log
+        echo "::endgroup::"
 
     - name: Export images
       run: |
