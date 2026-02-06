@@ -39,52 +39,55 @@ jobs:
         DEVICE: ${{ github.event.inputs.device }}
         UI: ${{ github.event.inputs.ui }}
       run: |
-        WORK_DIR="/home/runner/.local/var/pmbootstrap"
-        mkdir -p "$WORK_DIR"
+        WORK_DIR="/tmp/pmbootstrap-work"
+        sudo mkdir -p "$WORK_DIR"
+        sudo chmod 777 "$WORK_DIR"
         echo '8' > "$WORK_DIR/version"
+
         mkdir -p "$WORK_DIR/cache_git"
         echo "Cloning pmaports (this takes a few minutes)..."
         git clone --depth 1 --progress https://gitlab.postmarketos.org/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
         echo "pmaports cloned!"
-        mkdir -p ~/.config
 
-        echo "[pmbootstrap]" > ~/.config/pmbootstrap.cfg
-        echo "aports = /home/runner/.local/var/pmbootstrap/cache_git/pmaports" >> ~/.config/pmbootstrap.cfg
-        echo "ccache_size = 5G" >> ~/.config/pmbootstrap.cfg
-        echo "channel = master" >> ~/.config/pmbootstrap.cfg
-        echo "device = $DEVICE" >> ~/.config/pmbootstrap.cfg
-        echo "extra_packages = none" >> ~/.config/pmbootstrap.cfg
-        echo "hostname = pmos" >> ~/.config/pmbootstrap.cfg
-        echo "build_pkgs_on_install = True" >> ~/.config/pmbootstrap.cfg
-        echo "jobs = 4" >> ~/.config/pmbootstrap.cfg
-        echo "kernel =" >> ~/.config/pmbootstrap.cfg
-        echo "keymap =" >> ~/.config/pmbootstrap.cfg
-        echo "locale = en_US.UTF-8" >> ~/.config/pmbootstrap.cfg
-        echo "mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/" >> ~/.config/pmbootstrap.cfg
-        echo "mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/" >> ~/.config/pmbootstrap.cfg
-        echo "nonfree_firmware = True" >> ~/.config/pmbootstrap.cfg
-        echo "nonfree_userland = False" >> ~/.config/pmbootstrap.cfg
-        echo "ssh_keys = False" >> ~/.config/pmbootstrap.cfg
-        echo "ssh_key_glob = ~/.ssh/id_*.pub" >> ~/.config/pmbootstrap.cfg
-        echo "timezone = GMT" >> ~/.config/pmbootstrap.cfg
-        echo "ui = $UI" >> ~/.config/pmbootstrap.cfg
-        echo "ui_extras = False" >> ~/.config/pmbootstrap.cfg
-        echo "user = user" >> ~/.config/pmbootstrap.cfg
-        echo "work = /home/runner/.local/var/pmbootstrap" >> ~/.config/pmbootstrap.cfg
-        echo "boot_size = 256" >> ~/.config/pmbootstrap.cfg
-        echo "extra_space = 0" >> ~/.config/pmbootstrap.cfg
-        echo "sudo_timer = False" >> ~/.config/pmbootstrap.cfg
-        echo "" >> ~/.config/pmbootstrap.cfg
-        echo "[providers]" >> ~/.config/pmbootstrap.cfg
+        sudo mkdir -p /root/.config
+        sudo tee /root/.config/pmbootstrap.cfg > /dev/null << ENDCONFIG
+[pmbootstrap]
+aports = /tmp/pmbootstrap-work/cache_git/pmaports
+ccache_size = 5G
+channel = master
+device = $DEVICE
+extra_packages = none
+hostname = pmos
+build_pkgs_on_install = True
+jobs = 4
+kernel =
+keymap =
+locale = en_US.UTF-8
+mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/
+mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/
+nonfree_firmware = True
+nonfree_userland = False
+ssh_keys = False
+ssh_key_glob = ~/.ssh/id_*.pub
+timezone = GMT
+ui = $UI
+ui_extras = False
+user = user
+work = /tmp/pmbootstrap-work
+boot_size = 256
+extra_space = 0
+sudo_timer = False
+
+[providers]
+ENDCONFIG
 
         echo "=== Config file ==="
-        cat ~/.config/pmbootstrap.cfg
+        sudo cat /root/.config/pmbootstrap.cfg
 
     - name: Build PostmarketOS
       run: |
-        echo "::group::Starting PostmarketOS build"
+        echo "Starting PostmarketOS build..."
         sudo ./pmbootstrap/pmbootstrap.py -v install 2>&1 | tee build.log
-        echo "::endgroup::"
 
     - name: Export images
       run: |
