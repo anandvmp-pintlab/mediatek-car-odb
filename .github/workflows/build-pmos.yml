@@ -79,12 +79,12 @@ jobs:
     - name: Build PostmarketOS
       run: |
         echo "Starting PostmarketOS build..."
-        sudo ./pmbootstrap/pmbootstrap.py -v install 2>&1 | tee build.log
+        sudo ./pmbootstrap/pmbootstrap.py -c /root/.config/pmbootstrap.cfg -v install 2>&1 | tee build.log
 
     - name: Export images
       run: |
         mkdir -p output
-        sudo ./pmbootstrap/pmbootstrap.py export output/
+        sudo ./pmbootstrap/pmbootstrap.py -c /root/.config/pmbootstrap.cfg export output/
         sudo chown -R $USER:$USER output/
         ls -la output/
 
