@@ -11,6 +11,6 @@ output/
 *.img
 *.tar.gz
 
-#ignore all dotted folders
-**/.*/
+#ignore all agentic folders
+**/./claude
 

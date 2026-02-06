@@ -1,0 +1,95 @@
+name: Build PostmarketOS Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      device:
+        description: 'Device codename'
+        required: true
+        default: 'xiaomi-cactus'
+      ui:
+        description: 'UI (none, plasma-mobile, phosh, etc.)'
+        required: true
+        default: 'none'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-pip git bash coreutils openssl \
+          kpartx e2fsprogs dosfstools parted util-linux multipath-tools \
+          curl wget tar gzip xz-utils bzip2 file patch make gcc qemu-user-static
+
+    - name: Clone pmbootstrap
+      run: |
+        git clone --depth 1 https://gitlab.com/postmarketOS/pmbootstrap.git
+
+    - name: Setup pmbootstrap
+      run: |
+        WORK_DIR="/home/runner/.local/var/pmbootstrap"
+        mkdir -p "$WORK_DIR"
+        echo '8' > "$WORK_DIR/version"
+
+        mkdir -p "$WORK_DIR/cache_git"
+        git clone --depth 1 https://gitlab.com/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
+
+        mkdir -p ~/.config
+        cat > ~/.config/pmbootstrap.cfg << EOF
+[pmbootstrap]
+aports = /home/runner/.local/var/pmbootstrap/cache_git/pmaports
+ccache_size = 5G
+channel = master
+device = ${{ github.event.inputs.device }}
+extra_packages = none
+hostname = pmos
+build_pkgs_on_install = True
+jobs = 4
+kernel =
+keymap =
+locale = en_US.UTF-8
+mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/
+mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/
+nonfree_firmware = True
+nonfree_userland = False
+ssh_keys = False
+ssh_key_glob = ~/.ssh/id_*.pub
+timezone = GMT
+ui = ${{ github.event.inputs.ui }}
+ui_extras = False
+user = user
+work = /home/runner/.local/var/pmbootstrap
+boot_size = 256
+extra_space = 0
+sudo_timer = False
+
+[providers]
+EOF
+
+        echo "=== Config file ==="
+        cat ~/.config/pmbootstrap.cfg
+
+    - name: Build PostmarketOS
+      run: |
+        sudo ./pmbootstrap/pmbootstrap.py install
+
+    - name: Export images
+      run: |
+        mkdir -p output
+        sudo ./pmbootstrap/pmbootstrap.py export output/
+        sudo chown -R $USER:$USER output/
+        ls -la output/
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pmos-${{ github.event.inputs.device }}
+        path: output/
+        retention-days: 7
