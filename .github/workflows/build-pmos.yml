@@ -28,10 +28,13 @@ jobs:
 
     - name: Build PostmarketOS
       run: |
-        sudo -u builder bash -c '
+        sudo -u builder -i bash -c '
         set -ex
 
+        export HOME=/home/builder
         WORK_DIR="/home/builder/pmbootstrap-work"
+        CONFIG="/home/builder/.config/pmbootstrap.cfg"
+        PMBOOTSTRAP="/home/builder/pmbootstrap/pmbootstrap.py"
 
         # Clone pmbootstrap
         echo "=== Cloning pmbootstrap ==="
@@ -50,23 +53,23 @@ jobs:
         # Create config from base64
         echo "=== Creating config ==="
         mkdir -p /home/builder/.config
-        echo "W3BtYm9vdHN0cmFwXQphcG9ydHMgPSAvaG9tZS9idWlsZGVyL3BtYm9vdHN0cmFwLXdvcmsvY2FjaGVfZ2l0L3BtYXBvcnRzCmNjYWNoZV9zaXplID0gNUcKY2hhbm5lbCA9IG1hc3RlcgpkZXZpY2UgPSB4aWFvbWktY2FjdHVzCmV4dHJhX3BhY2thZ2VzID0gbm9uZQpob3N0bmFtZSA9IHBtb3MKYnVpbGRfcGtnc19vbl9pbnN0YWxsID0gVHJ1ZQpqb2JzID0gNAprZXJuZWwgPQprZXltYXAgPQpsb2NhbGUgPSBlbl9VUy5VVEYtOAptaXJyb3JfYWxwaW5lID0gaHR0cDovL2RsLWNkbi5hbHBpbmVsaW51eC5vcmcvYWxwaW5lLwptaXJyb3JzX3Bvc3RtYXJrZXRvcyA9IGh0dHA6Ly9taXJyb3IucG9zdG1hcmtldG9zLm9yZy9wb3N0bWFya2V0b3MvCm5vbmZyZWVfZmlybXdhcmUgPSBUcnVlCm5vbmZyZWVfdXNlcmxhbmQgPSBGYWxzZQpzc2hfa2V5cyA9IEZhbHNlCnNzaF9rZXlfZ2xvYiA9IH4vLnNzaC9pZF8qLnB1Ygp0aW1lem9uZSA9IEdNVAp1aSA9IG5vbmUKdWlfZXh0cmFzID0gRmFsc2UKdXNlciA9IHVzZXIKd29yayA9IC9ob21lL2J1aWxkZXIvcG1ib290c3RyYXAtd29yawpib290X3NpemUgPSAyNTYKZXh0cmFfc3BhY2UgPSAwCnN1ZG9fdGltZXIgPSBGYWxzZQoKW3Byb3ZpZGVyc10K" | base64 -d > /home/builder/.config/pmbootstrap.cfg
+        echo "W3BtYm9vdHN0cmFwXQphcG9ydHMgPSAvaG9tZS9idWlsZGVyL3BtYm9vdHN0cmFwLXdvcmsvY2FjaGVfZ2l0L3BtYXBvcnRzCmNjYWNoZV9zaXplID0gNUcKY2hhbm5lbCA9IG1hc3RlcgpkZXZpY2UgPSB4aWFvbWktY2FjdHVzCmV4dHJhX3BhY2thZ2VzID0gbm9uZQpob3N0bmFtZSA9IHBtb3MKYnVpbGRfcGtnc19vbl9pbnN0YWxsID0gVHJ1ZQpqb2JzID0gNAprZXJuZWwgPQprZXltYXAgPQpsb2NhbGUgPSBlbl9VUy5VVEYtOAptaXJyb3JfYWxwaW5lID0gaHR0cDovL2RsLWNkbi5hbHBpbmVsaW51eC5vcmcvYWxwaW5lLwptaXJyb3JzX3Bvc3RtYXJrZXRvcyA9IGh0dHA6Ly9taXJyb3IucG9zdG1hcmtldG9zLm9yZy9wb3N0bWFya2V0b3MvCm5vbmZyZWVfZmlybXdhcmUgPSBUcnVlCm5vbmZyZWVfdXNlcmxhbmQgPSBGYWxzZQpzc2hfa2V5cyA9IEZhbHNlCnNzaF9rZXlfZ2xvYiA9IH4vLnNzaC9pZF8qLnB1Ygp0aW1lem9uZSA9IEdNVAp1aSA9IG5vbmUKdWlfZXh0cmFzID0gRmFsc2UKdXNlciA9IHVzZXIKd29yayA9IC9ob21lL2J1aWxkZXIvcG1ib290c3RyYXAtd29yawpib290X3NpemUgPSAyNTYKZXh0cmFfc3BhY2UgPSAwCnN1ZG9fdGltZXIgPSBGYWxzZQoKW3Byb3ZpZGVyc10K" | base64 -d > "$CONFIG"
 
         echo "=== Config file ==="
-        cat /home/builder/.config/pmbootstrap.cfg
+        cat "$CONFIG"
 
         # Check pmbootstrap status
         echo "=== pmbootstrap status ==="
-        /home/builder/pmbootstrap/pmbootstrap.py status || true
+        "$PMBOOTSTRAP" -c "$CONFIG" status || true
 
         # Build
         echo "=== Starting build ==="
-        /home/builder/pmbootstrap/pmbootstrap.py -v install
+        "$PMBOOTSTRAP" -c "$CONFIG" -v install
 
         # Export
         echo "=== Exporting images ==="
         mkdir -p /home/builder/output
-        /home/builder/pmbootstrap/pmbootstrap.py export /home/builder/output/
+        "$PMBOOTSTRAP" -c "$CONFIG" export /home/builder/output/
         ls -la /home/builder/output/
         '
 
