@@ -75,8 +75,11 @@ echo "=== pmbootstrap status ==="
 # Build
 echo "=== Starting build ==="
 /tmp/pmbootstrap/pmbootstrap.py -c "$CONFIG" -v install || {
-    echo "=== BUILD FAILED - Showing full log ==="
-    cat /tmp/pmbootstrap-work/log.txt || true
+    echo "=== BUILD FAILED ==="
+    echo "=== Searching for errors in log ==="
+    grep -i "error:" /tmp/pmbootstrap-work/log.txt | tail -50 || true
+    echo "=== Last 200 lines of log ==="
+    tail -200 /tmp/pmbootstrap-work/log.txt || true
     exit 1
 }
 
