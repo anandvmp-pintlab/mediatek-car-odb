@@ -1,6 +1,8 @@
 name: Build PostmarketOS Image
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       device:
@@ -11,6 +13,10 @@ on:
         description: 'UI (none, plasma-mobile, phosh, etc.)'
         required: true
         default: 'none'
+
+env:
+  DEFAULT_DEVICE: 'xiaomi-cactus'
+  DEFAULT_UI: 'none'
 
 jobs:
   build:
@@ -36,8 +42,8 @@ jobs:
 
     - name: Setup pmbootstrap
       env:
-        DEVICE: ${{ github.event.inputs.device }}
-        UI: ${{ github.event.inputs.ui }}
+        DEVICE: ${{ github.event.inputs.device || 'xiaomi-cactus' }}
+        UI: ${{ github.event.inputs.ui || 'none' }}
       run: |
         WORK_DIR="/tmp/pmbootstrap-work"
         sudo mkdir -p "$WORK_DIR"
@@ -99,6 +105,6 @@ ENDCONFIG
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: pmos-${{ github.event.inputs.device }}
+        name: pmos-${{ github.event.inputs.device || 'xiaomi-cactus' }}
         path: output/
         retention-days: 7
