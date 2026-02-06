@@ -14,16 +14,18 @@ git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
 
 # Patch pmbootstrap to allow running as root (needed for CI)
 echo "=== Patching pmbootstrap for root access ==="
-# Find and patch the root check
-ROOT_CHECK_FILE=$(grep -rl "Do not run pmbootstrap as root" /tmp/pmbootstrap/pmb/ 2>/dev/null | head -1)
-if [ -n "$ROOT_CHECK_FILE" ]; then
-    echo "Found root check in: $ROOT_CHECK_FILE"
-    cat "$ROOT_CHECK_FILE"
-    # Comment out the entire root check block
-    sed -i 's/if os.geteuid() == 0:/if False:  # Patched for CI/' "$ROOT_CHECK_FILE"
-    echo "=== After patching ==="
-    cat "$ROOT_CHECK_FILE"
-fi
+# Find all files with root check and patch them
+for f in $(grep -rl "geteuid" /tmp/pmbootstrap/pmb/ 2>/dev/null); do
+    echo "Patching: $f"
+    sed -i 's/os.geteuid() == 0/False/g' "$f"
+done
+# Also patch any RuntimeError about root
+for f in $(grep -rl "Do not run pmbootstrap as root" /tmp/pmbootstrap/ 2>/dev/null); do
+    echo "Patching root message in: $f"
+    sed -i '/Do not run pmbootstrap as root/d' "$f"
+done
+echo "=== Verifying patch ==="
+grep -rn "geteuid" /tmp/pmbootstrap/pmb/ || echo "No geteuid found - patch successful"
 
 # Setup work directory
 echo "=== Setting up work directory ==="
