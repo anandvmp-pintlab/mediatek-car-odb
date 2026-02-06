@@ -21,70 +21,85 @@ jobs:
           kpartx e2fsprogs dosfstools parted util-linux multipath-tools \
           curl wget tar gzip xz-utils bzip2 file patch make gcc qemu-user-static
 
-    - name: Clone pmbootstrap
-      run: |
-        echo "Cloning pmbootstrap..."
-        git clone --depth 1 --progress https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
-        echo "Done!"
-
-    - name: Setup pmbootstrap
-      run: |
-        WORK_DIR="/tmp/pmbootstrap-work"
-        DEVICE="xiaomi-cactus"
-        UI="none"
-
-        sudo mkdir -p "$WORK_DIR"
-        sudo chmod 777 "$WORK_DIR"
-        echo '8' > "$WORK_DIR/version"
-
-        mkdir -p "$WORK_DIR/cache_git"
-        echo "Cloning pmaports (this takes a few minutes)..."
-        git clone --depth 1 --progress https://gitlab.postmarketos.org/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
-        echo "pmaports cloned!"
-
-        sudo mkdir -p /root/.config
-
-        echo '[pmbootstrap]' | sudo tee /root/.config/pmbootstrap.cfg
-        echo "aports = /tmp/pmbootstrap-work/cache_git/pmaports" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "ccache_size = 5G" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "channel = master" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "device = $DEVICE" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "extra_packages = none" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "hostname = pmos" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "build_pkgs_on_install = True" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "jobs = 4" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "kernel =" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "keymap =" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "locale = en_US.UTF-8" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "nonfree_firmware = True" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "nonfree_userland = False" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "ssh_keys = False" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "ssh_key_glob = ~/.ssh/id_*.pub" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "timezone = GMT" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "ui = $UI" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "ui_extras = False" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "user = user" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "work = /tmp/pmbootstrap-work" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "boot_size = 256" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "extra_space = 0" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "sudo_timer = False" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo "" | sudo tee -a /root/.config/pmbootstrap.cfg
-        echo '[providers]' | sudo tee -a /root/.config/pmbootstrap.cfg
-
-        echo "=== Config file ==="
-        sudo cat /root/.config/pmbootstrap.cfg
-
     - name: Build PostmarketOS
       run: |
-        echo "Starting PostmarketOS build..."
-        sudo ./pmbootstrap/pmbootstrap.py -c /root/.config/pmbootstrap.cfg -v install 2>&1 | tee build.log
+        # Everything runs as root
+        sudo bash -c '
+        set -ex
 
-    - name: Export images
+        WORK_DIR="/root/pmbootstrap-work"
+        DEVICE="xiaomi-cactus"
+
+        # Clone pmbootstrap
+        echo "=== Cloning pmbootstrap ==="
+        git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /root/pmbootstrap
+
+        # Setup work directory
+        echo "=== Setting up work directory ==="
+        mkdir -p "$WORK_DIR"
+        echo "8" > "$WORK_DIR/version"
+
+        # Clone pmaports
+        echo "=== Cloning pmaports ==="
+        mkdir -p "$WORK_DIR/cache_git"
+        git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
+
+        # Create config
+        echo "=== Creating config ==="
+        mkdir -p /root/.config
+        cat > /root/.config/pmbootstrap.cfg << "PMCONFIG"
+[pmbootstrap]
+aports = /root/pmbootstrap-work/cache_git/pmaports
+ccache_size = 5G
+channel = master
+device = xiaomi-cactus
+extra_packages = none
+hostname = pmos
+build_pkgs_on_install = True
+jobs = 4
+kernel =
+keymap =
+locale = en_US.UTF-8
+mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/
+mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/
+nonfree_firmware = True
+nonfree_userland = False
+ssh_keys = False
+ssh_key_glob = ~/.ssh/id_*.pub
+timezone = GMT
+ui = none
+ui_extras = False
+user = user
+work = /root/pmbootstrap-work
+boot_size = 256
+extra_space = 0
+sudo_timer = False
+
+[providers]
+PMCONFIG
+
+        echo "=== Config file ==="
+        cat /root/.config/pmbootstrap.cfg
+
+        # Check pmbootstrap status
+        echo "=== pmbootstrap status ==="
+        /root/pmbootstrap/pmbootstrap.py status || true
+
+        # Build
+        echo "=== Starting build ==="
+        /root/pmbootstrap/pmbootstrap.py -v install
+
+        # Export
+        echo "=== Exporting images ==="
+        mkdir -p /root/output
+        /root/pmbootstrap/pmbootstrap.py export /root/output/
+        ls -la /root/output/
+        '
+
+    - name: Copy artifacts
       run: |
         mkdir -p output
-        sudo ./pmbootstrap/pmbootstrap.py -c /root/.config/pmbootstrap.cfg export output/
+        sudo cp -r /root/output/* output/ || true
         sudo chown -R $USER:$USER output/
         ls -la output/
 
