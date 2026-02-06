@@ -1,0 +1,93 @@
+# GitLab CI configuration for building PostmarketOS image
+# This runs in GitLab's free CI/CD environment (x86_64 Linux)
+
+stages:
+  - build
+
+variables:
+  DEVICE: "xiaomi-cactus"
+  UI: "none"
+  USER: "user"
+
+build-pmos:
+  stage: build
+  image: alpine:latest
+  tags:
+    - docker
+  before_script:
+    # Install dependencies
+    - apk add --no-cache python3 py3-pip git sudo bash coreutils openssl
+    - apk add --no-cache kpartx losetup e2fsprogs dosfstools parted util-linux
+    - apk add --no-cache multipath-tools curl wget tar gzip xz bzip2 file patch
+    - apk add --no-cache make gcc musl-dev linux-headers libffi-dev openssl-dev python3-dev
+
+    # Create build user
+    - adduser -D -s /bin/bash builder
+    - echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+  script:
+    # Clone pmbootstrap
+    - git clone https://gitlab.com/postmarketOS/pmbootstrap.git /home/builder/pmbootstrap
+    - chown -R builder:builder /home/builder
+
+    # Initialize and build as builder user
+    - |
+      su - builder << 'EOF'
+      cd ~
+
+      # Create config
+      mkdir -p ~/.config
+      cat > ~/.config/pmbootstrap.cfg << 'ENDCFG'
+      [pmbootstrap]
+      aports = $WORK/cache_git/pmaports
+      ccache_size = 5G
+      channel = master
+      device = xiaomi-cactus
+      extra_packages = none
+      hostname = cactus
+      build_pkgs_on_install = True
+      jobs = 4
+      kernel =
+      keymap =
+      locale = en_US.UTF-8
+      mirror_alpine = http://dl-cdn.alpinelinux.org/alpine/
+      mirrors_postmarketos = http://mirror.postmarketos.org/postmarketos/
+      nonfree_firmware = True
+      nonfree_userland = False
+      ssh_keys = True
+      ssh_key_glob = ~/.ssh/id_*.pub
+      timezone = GMT
+      ui = none
+      ui_extras = False
+      user = user
+      work = /home/builder/.local/var/pmbootstrap
+      boot_size = 256
+      extra_space = 0
+      sudo_timer = False
+
+      [providers]
+      ENDCFG
+
+      # Create work directory with version
+      mkdir -p ~/.local/var/pmbootstrap
+      echo '8' > ~/.local/var/pmbootstrap/version
+
+      # Clone pmaports
+      mkdir -p ~/.local/var/pmbootstrap/cache_git
+      git clone --depth 1 https://gitlab.com/postmarketOS/pmaports.git ~/.local/var/pmbootstrap/cache_git/pmaports
+
+      # Build
+      ~/pmbootstrap/pmbootstrap.py install
+
+      # Export images
+      mkdir -p ~/output
+      ~/pmbootstrap/pmbootstrap.py export ~/output
+      EOF
+
+  artifacts:
+    paths:
+      - /home/builder/output/
+    expire_in: 1 week
+    when: on_success
+
+  timeout: 2 hours

@@ -1,0 +1,58 @@
+FROM alpine:latest
+
+# Install required packages for pmbootstrap
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    git \
+    sudo \
+    bash \
+    coreutils \
+    procps \
+    openssl \
+    kpartx \
+    losetup \
+    e2fsprogs \
+    dosfstools \
+    parted \
+    util-linux \
+    multipath-tools \
+    android-tools \
+    curl \
+    wget \
+    tar \
+    gzip \
+    xz \
+    bzip2 \
+    file \
+    patch \
+    make \
+    gcc \
+    musl-dev \
+    linux-headers \
+    libffi-dev \
+    openssl-dev \
+    python3-dev
+
+# Create pmbootstrap user with sudo access
+RUN adduser -D -s /bin/bash pmuser && \
+    echo "pmuser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Copy pmbootstrap source
+COPY pmbootstrap /home/pmuser/pmbootstrap
+
+# Set ownership
+RUN chown -R pmuser:pmuser /home/pmuser
+
+# Switch to pmuser
+USER pmuser
+WORKDIR /home/pmuser
+
+# Create work directory
+RUN mkdir -p /home/pmuser/.local/var/pmbootstrap
+
+# Set up alias
+RUN echo 'alias pmbootstrap="/home/pmuser/pmbootstrap/pmbootstrap.py"' >> ~/.bashrc
+
+# Entry point
+CMD ["/bin/bash"]

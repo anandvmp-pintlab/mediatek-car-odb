@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  pmbootstrap:
+    build: .
+    container_name: pmbootstrap-builder
+    privileged: true
+    stdin_open: true
+    tty: true
+    volumes:
+      # Persist work directory
+      - pmbootstrap-work:/home/pmuser/.local/var/pmbootstrap
+      # Persist config
+      - pmbootstrap-config:/home/pmuser/.config
+      # Mount output directory for built images
+      - ./output:/home/pmuser/output
+    devices:
+      # Pass USB devices for fastboot (may not work on macOS)
+      - /dev/bus/usb:/dev/bus/usb
+
+volumes:
+  pmbootstrap-work:
+  pmbootstrap-config:

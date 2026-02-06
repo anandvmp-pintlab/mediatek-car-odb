@@ -1,0 +1,16 @@
+# pmbootstrap submodule (too large)
+pmbootstrap/
+
+# Docker volumes
+output/
+
+# macOS
+.DS_Store
+
+# Build artifacts
+*.img
+*.tar.gz
+
+#ignore all dotted folders
+**/.*/
+
