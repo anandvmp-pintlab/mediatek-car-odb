@@ -31,7 +31,7 @@ jobs:
     - name: Clone pmbootstrap
       run: |
         echo "Cloning pmbootstrap..."
-        git clone --depth 1 --progress https://gitlab.com/postmarketOS/pmbootstrap.git
+        git clone --depth 1 --progress https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
         echo "Done!"
 
     - name: Setup pmbootstrap
@@ -44,7 +44,7 @@ jobs:
         echo '8' > "$WORK_DIR/version"
         mkdir -p "$WORK_DIR/cache_git"
         echo "Cloning pmaports (this takes a few minutes)..."
-        git clone --depth 1 --progress https://gitlab.com/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
+        git clone --depth 1 --progress https://gitlab.postmarketos.org/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
         echo "pmaports cloned!"
         mkdir -p ~/.config
 
