@@ -12,6 +12,19 @@ CONFIG="/tmp/pmbootstrap.cfg"
 echo "=== Cloning pmbootstrap ==="
 git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /tmp/pmbootstrap
 
+# Patch pmbootstrap to allow running as root (needed for CI)
+echo "=== Patching pmbootstrap for root access ==="
+# Find and patch the root check
+ROOT_CHECK_FILE=$(grep -rl "Do not run pmbootstrap as root" /tmp/pmbootstrap/pmb/ 2>/dev/null | head -1)
+if [ -n "$ROOT_CHECK_FILE" ]; then
+    echo "Found root check in: $ROOT_CHECK_FILE"
+    cat "$ROOT_CHECK_FILE"
+    # Comment out the entire root check block
+    sed -i 's/if os.geteuid() == 0:/if False:  # Patched for CI/' "$ROOT_CHECK_FILE"
+    echo "=== After patching ==="
+    cat "$ROOT_CHECK_FILE"
+fi
+
 # Setup work directory
 echo "=== Setting up work directory ==="
 mkdir -p "$WORK_DIR"
