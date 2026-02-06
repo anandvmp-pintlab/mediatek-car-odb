@@ -93,3 +93,4 @@ EOF
         name: pmos-${{ github.event.inputs.device }}
         path: output/
         retention-days: 7
+
