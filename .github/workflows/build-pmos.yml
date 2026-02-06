@@ -26,52 +26,14 @@ jobs:
         sudo useradd -m -s /bin/bash builder
         echo "builder ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/builder
 
-    - name: Build PostmarketOS
+    - name: Setup build script
       run: |
-        sudo -u builder -i bash -c '
-        set -ex
+        sudo cp scripts/build-pmos-ci.sh /home/builder/
+        sudo chmod +x /home/builder/build-pmos-ci.sh
+        sudo chown builder:builder /home/builder/build-pmos-ci.sh
 
-        export HOME=/home/builder
-        WORK_DIR="/home/builder/pmbootstrap-work"
-        CONFIG="/home/builder/.config/pmbootstrap.cfg"
-        PMBOOTSTRAP="/home/builder/pmbootstrap/pmbootstrap.py"
-
-        # Clone pmbootstrap
-        echo "=== Cloning pmbootstrap ==="
-        git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /home/builder/pmbootstrap
-
-        # Setup work directory
-        echo "=== Setting up work directory ==="
-        mkdir -p "$WORK_DIR"
-        echo "8" > "$WORK_DIR/version"
-
-        # Clone pmaports
-        echo "=== Cloning pmaports ==="
-        mkdir -p "$WORK_DIR/cache_git"
-        git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmaports.git "$WORK_DIR/cache_git/pmaports"
-
-        # Create config from base64
-        echo "=== Creating config ==="
-        mkdir -p /home/builder/.config
-        echo "W3BtYm9vdHN0cmFwXQphcG9ydHMgPSAvaG9tZS9idWlsZGVyL3BtYm9vdHN0cmFwLXdvcmsvY2FjaGVfZ2l0L3BtYXBvcnRzCmNjYWNoZV9zaXplID0gNUcKY2hhbm5lbCA9IG1hc3RlcgpkZXZpY2UgPSB4aWFvbWktY2FjdHVzCmV4dHJhX3BhY2thZ2VzID0gbm9uZQpob3N0bmFtZSA9IHBtb3MKYnVpbGRfcGtnc19vbl9pbnN0YWxsID0gVHJ1ZQpqb2JzID0gNAprZXJuZWwgPQprZXltYXAgPQpsb2NhbGUgPSBlbl9VUy5VVEYtOAptaXJyb3JfYWxwaW5lID0gaHR0cDovL2RsLWNkbi5hbHBpbmVsaW51eC5vcmcvYWxwaW5lLwptaXJyb3JzX3Bvc3RtYXJrZXRvcyA9IGh0dHA6Ly9taXJyb3IucG9zdG1hcmtldG9zLm9yZy9wb3N0bWFya2V0b3MvCm5vbmZyZWVfZmlybXdhcmUgPSBUcnVlCm5vbmZyZWVfdXNlcmxhbmQgPSBGYWxzZQpzc2hfa2V5cyA9IEZhbHNlCnNzaF9rZXlfZ2xvYiA9IH4vLnNzaC9pZF8qLnB1Ygp0aW1lem9uZSA9IEdNVAp1aSA9IG5vbmUKdWlfZXh0cmFzID0gRmFsc2UKdXNlciA9IHVzZXIKd29yayA9IC9ob21lL2J1aWxkZXIvcG1ib290c3RyYXAtd29yawpib290X3NpemUgPSAyNTYKZXh0cmFfc3BhY2UgPSAwCnN1ZG9fdGltZXIgPSBGYWxzZQoKW3Byb3ZpZGVyc10K" | base64 -d > "$CONFIG"
-
-        echo "=== Config file ==="
-        cat "$CONFIG"
-
-        # Check pmbootstrap status
-        echo "=== pmbootstrap status ==="
-        "$PMBOOTSTRAP" -c "$CONFIG" status || true
-
-        # Build
-        echo "=== Starting build ==="
-        "$PMBOOTSTRAP" -c "$CONFIG" -v install
-
-        # Export
-        echo "=== Exporting images ==="
-        mkdir -p /home/builder/output
-        "$PMBOOTSTRAP" -c "$CONFIG" export /home/builder/output/
-        ls -la /home/builder/output/
-        '
+    - name: Build PostmarketOS
+      run: sudo -u builder -i /home/builder/build-pmos-ci.sh
 
     - name: Copy artifacts
       run: |
