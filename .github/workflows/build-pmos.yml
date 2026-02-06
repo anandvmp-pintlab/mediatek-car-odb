@@ -52,16 +52,17 @@ jobs:
 
         # Check pmbootstrap status
         echo "=== pmbootstrap status ==="
-        /root/pmbootstrap/pmbootstrap.py status || true
+        export HOME=/root
+        /root/pmbootstrap/pmbootstrap.py -c /root/.config/pmbootstrap.cfg status || true
 
         # Build
         echo "=== Starting build ==="
-        /root/pmbootstrap/pmbootstrap.py -v install
+        /root/pmbootstrap/pmbootstrap.py -c /root/.config/pmbootstrap.cfg -v install
 
         # Export
         echo "=== Exporting images ==="
         mkdir -p /root/output
-        /root/pmbootstrap/pmbootstrap.py export /root/output/
+        /root/pmbootstrap/pmbootstrap.py -c /root/.config/pmbootstrap.cfg export /root/output/
         ls -la /root/output/
         '
 
