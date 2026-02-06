@@ -21,16 +21,21 @@ jobs:
           kpartx e2fsprogs dosfstools parted util-linux multipath-tools \
           curl wget tar gzip xz-utils bzip2 file patch make gcc qemu-user-static
 
+    - name: Create builder user
+      run: |
+        sudo useradd -m -s /bin/bash builder
+        echo "builder ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/builder
+
     - name: Build PostmarketOS
       run: |
-        sudo bash -c '
+        sudo -u builder bash -c '
         set -ex
 
-        WORK_DIR="/root/pmbootstrap-work"
+        WORK_DIR="/home/builder/pmbootstrap-work"
 
         # Clone pmbootstrap
         echo "=== Cloning pmbootstrap ==="
-        git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /root/pmbootstrap
+        git clone --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /home/builder/pmbootstrap
 
         # Setup work directory
         echo "=== Setting up work directory ==="
@@ -44,32 +49,31 @@ jobs:
 
         # Create config from base64
         echo "=== Creating config ==="
-        mkdir -p /root/.config
-        echo "W3BtYm9vdHN0cmFwXQphcG9ydHMgPSAvcm9vdC9wbWJvb3RzdHJhcC13b3JrL2NhY2hlX2dpdC9wbWFwb3J0cwpjY2FjaGVfc2l6ZSA9IDVHCmNoYW5uZWwgPSBtYXN0ZXIKZGV2aWNlID0geGlhb21pLWNhY3R1cwpleHRyYV9wYWNrYWdlcyA9IG5vbmUKaG9zdG5hbWUgPSBwbW9zCmJ1aWxkX3BrZ3Nfb25faW5zdGFsbCA9IFRydWUKam9icyA9IDQKa2VybmVsID0Ka2V5bWFwID0KbG9jYWxlID0gZW5fVVMuVVRGLTgKbWlycm9yX2FscGluZSA9IGh0dHA6Ly9kbC1jZG4uYWxwaW5lbGludXgub3JnL2FscGluZS8KbWlycm9yc19wb3N0bWFya2V0b3MgPSBodHRwOi8vbWlycm9yLnBvc3RtYXJrZXRvcy5vcmcvcG9zdG1hcmtldG9zLwpub25mcmVlX2Zpcm13YXJlID0gVHJ1ZQpub25mcmVlX3VzZXJsYW5kID0gRmFsc2UKc3NoX2tleXMgPSBGYWxzZQpzc2hfa2V5X2dsb2IgPSB+Ly5zc2gvaWRfKi5wdWIKdGltZXpvbmUgPSBHTVQKdWkgPSBub25lCnVpX2V4dHJhcyA9IEZhbHNlCnVzZXIgPSB1c2VyCndvcmsgPSAvcm9vdC9wbWJvb3RzdHJhcC13b3JrCmJvb3Rfc2l6ZSA9IDI1NgpleHRyYV9zcGFjZSA9IDAKc3Vkb190aW1lciA9IEZhbHNlCgpbcHJvdmlkZXJzXQo=" | base64 -d > /root/.config/pmbootstrap.cfg
+        mkdir -p /home/builder/.config
+        echo "W3BtYm9vdHN0cmFwXQphcG9ydHMgPSAvaG9tZS9idWlsZGVyL3BtYm9vdHN0cmFwLXdvcmsvY2FjaGVfZ2l0L3BtYXBvcnRzCmNjYWNoZV9zaXplID0gNUcKY2hhbm5lbCA9IG1hc3RlcgpkZXZpY2UgPSB4aWFvbWktY2FjdHVzCmV4dHJhX3BhY2thZ2VzID0gbm9uZQpob3N0bmFtZSA9IHBtb3MKYnVpbGRfcGtnc19vbl9pbnN0YWxsID0gVHJ1ZQpqb2JzID0gNAprZXJuZWwgPQprZXltYXAgPQpsb2NhbGUgPSBlbl9VUy5VVEYtOAptaXJyb3JfYWxwaW5lID0gaHR0cDovL2RsLWNkbi5hbHBpbmVsaW51eC5vcmcvYWxwaW5lLwptaXJyb3JzX3Bvc3RtYXJrZXRvcyA9IGh0dHA6Ly9taXJyb3IucG9zdG1hcmtldG9zLm9yZy9wb3N0bWFya2V0b3MvCm5vbmZyZWVfZmlybXdhcmUgPSBUcnVlCm5vbmZyZWVfdXNlcmxhbmQgPSBGYWxzZQpzc2hfa2V5cyA9IEZhbHNlCnNzaF9rZXlfZ2xvYiA9IH4vLnNzaC9pZF8qLnB1Ygp0aW1lem9uZSA9IEdNVAp1aSA9IG5vbmUKdWlfZXh0cmFzID0gRmFsc2UKdXNlciA9IHVzZXIKd29yayA9IC9ob21lL2J1aWxkZXIvcG1ib290c3RyYXAtd29yawpib290X3NpemUgPSAyNTYKZXh0cmFfc3BhY2UgPSAwCnN1ZG9fdGltZXIgPSBGYWxzZQoKW3Byb3ZpZGVyc10K" | base64 -d > /home/builder/.config/pmbootstrap.cfg
 
         echo "=== Config file ==="
-        cat /root/.config/pmbootstrap.cfg
+        cat /home/builder/.config/pmbootstrap.cfg
 
         # Check pmbootstrap status
         echo "=== pmbootstrap status ==="
-        export HOME=/root
-        /root/pmbootstrap/pmbootstrap.py -c /root/.config/pmbootstrap.cfg status || true
+        /home/builder/pmbootstrap/pmbootstrap.py status || true
 
         # Build
         echo "=== Starting build ==="
-        /root/pmbootstrap/pmbootstrap.py -c /root/.config/pmbootstrap.cfg -v install
+        /home/builder/pmbootstrap/pmbootstrap.py -v install
 
         # Export
         echo "=== Exporting images ==="
-        mkdir -p /root/output
-        /root/pmbootstrap/pmbootstrap.py -c /root/.config/pmbootstrap.cfg export /root/output/
-        ls -la /root/output/
+        mkdir -p /home/builder/output
+        /home/builder/pmbootstrap/pmbootstrap.py export /home/builder/output/
+        ls -la /home/builder/output/
         '
 
     - name: Copy artifacts
       run: |
         mkdir -p output
-        sudo cp -r /root/output/* output/ || true
+        sudo cp -r /home/builder/output/* output/ || true
         sudo chown -R $USER:$USER output/
         ls -la output/
 
